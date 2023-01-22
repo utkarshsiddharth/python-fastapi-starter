@@ -1,64 +1,49 @@
 
+from sqlalchemy.orm import Session
 from api.schemas.user_schema import *
-from api.helpers.user_helpers import find_user_by_user_id
+from api.helpers.db_helpers import *
 from api.helpers.helpers import * 
+from api.models.user_model import *
 
-userDB = []
+from fastapi import HTTPException
 
 # Get all Users
-async def get_all_users_c() -> list[User]:
-    return userDB
+async def get_all_users_c(db: Session):
+    return db.query(UserModel).all()
     
 # Get user by User ID
-async def get_user_by_id_c(user_id: int) -> dict:
-    user = find_user_by_user_id(userDB, user_id)
+async def get_user_by_id_c(db: Session, user_id: int) -> UserOut:
+    user = find_item_by_id(db=db,Model=UserModel, id=user_id)
     if user is None:
-        return {
-            "status": "error",
-            "message": "User not found"
-        }
-    return {
-        "status": "OK",
-        "user": user
-    }
+        raise HTTPException(status_code=404, detail='User not found')
+    return user
 
 # Create a new User
-async def create_user_c(user: CreateUserDto) -> dict:
-    item = {
-        "email": user.email,
-        "password": user.password,
-        "name": user.name
-    }
-    item['id'] = len(userDB) + 1
-    userDB.append(item)
-    return {
-        "status": "OK",
-        "user": item
-    }
+async def create_user_c(db: Session, user: CreateUserDto) -> UserOut:
+    hashed_password = user.password + '-hashed'
+    db_user = UserModel(password=hashed_password, email=user.email, is_active=False)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
     
-# Update User by User ID 
-async def update_user_by_id_c(user_id: int, user: UpdateUserDto):
-    item = find_user_by_user_id(userDB, user_id)
+# protected - (admin or self) - Update User by User ID 
+async def update_user_by_id_c(db: Session, user_id: int, user: UpdateUserDto):
+    item = find_item_by_id(db,Model=UserModel, id=user_id)
     if item is None:
-        return {
-            "status": "error",
-            "message": "User not found"
-        }
-
-    return item.update(user)
+        raise HTTPException('User Not Found!!')
+    updated_item = find_item_by_id_and_update(db=db, Model=UserModel, id=user_id,payload=user)
+    return updated_item
     
 
-# Delete a User by User ID
-async def delete_user_by_id_c(user_id: int):
-    itemIndex = find_index(userDB, 'id', user_id)
-    print(itemIndex, 'found item to delete ...')
-    if itemIndex < 0:
-        return {
-            "status": "error",
-            "message": "User not found"
-        }
-    # remove the user 
-    del userDB[itemIndex]
-    return userDB
+# protected - (admin or self) - Delete a User by User ID
+async def delete_user_by_id_c(db: Session, user_id: int):
+    item = find_item_by_id(db,Model=UserModel, id=user_id)
+    if item is None:
+        raise HTTPException('User Not Found!!')
+    is_removed = find_by_id_and_remove(db=db, Model=UserModel, id=user_id)
+    if is_removed:
+        return 'User Removed Sucessfully!!'
+    return 'Something went wrong while removing user'
 
 

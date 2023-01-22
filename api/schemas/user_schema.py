@@ -1,15 +1,22 @@
-from pydantic import BaseModel 
+from pydantic import BaseModel, Field, EmailStr
 
-class User(BaseModel):
-    id: str
-    name: str
-    email: str 
-    password: str
+# -------- User Schema --------
+class UserBase(BaseModel):
+    email: str
+    is_active: bool
+    
 
 class CreateUserDto(BaseModel):
-    name: str
-    email: str 
-    password: str
-
+    email: EmailStr = Field(title="User Email", description="User Email") 
+    password: str = Field(title="Password", description="Password with length greater than equal to 8",min_length=8)
 class UpdateUserDto(BaseModel):
-    name: str
+    is_active: bool
+
+class UserOut(UserBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+class User(UserBase):
+    password: str
+     

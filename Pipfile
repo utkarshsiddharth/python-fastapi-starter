@@ -8,6 +8,8 @@ fastapi = "*"
 uvicorn = "*"
 starlette = "*"
 pandas = "*"
+email-validator = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 
