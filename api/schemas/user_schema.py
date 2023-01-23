@@ -19,4 +19,8 @@ class UserOut(UserBase):
 
 class User(UserBase):
     password: str
+
+class LoginDto(BaseModel):
+    email: str 
+    password: str
      

@@ -1,12 +1,30 @@
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 from sqlalchemy.orm import Session
-from api.schemas.user_schema import User
-from fastapi import HTTPException
+from api.schemas.user_schema import LoginDto,UserOut
+from api.utils.utils import *
 
 def find_item_by_id(db: Session, Model, id: int):
     item = db.query(Model).filter(Model.id == id).first()
-    if item is None:
-        raise HTTPException(status_code=404, detail='Profile not found')
     return item
+
+def find_item_by_email(db: Session, Model, email: str):
+    item = db.query(Model).filter(Model.email == email).first()
+    return item
+
+# Authenticate user
+def authenticate_user(db: Session, Model, login_input: LoginDto) -> UserOut | bool:
+    """ Check if user exists """
+    item = find_item_by_email(db, Model=Model, email=login_input.email)
+    if item is None:
+        return False
+    """ Check if password is correct """
+    match = verify_password(plain_password=login_input.password, hashed_password=item.password)
+    if match is None:
+        return False
+    return item
+
 
 def find_item_by_id_and_update(db: Session, Model, id: int, payload):
     db_item_query = db.query(Model).filter(Model.id == id)
@@ -22,3 +40,11 @@ def find_by_id_and_remove(db: Session, Model, id: int) -> bool:
     db.query(Model).filter(Model.id == id).delete()
     db.commit()
     return True
+
+# Login 
+
+def verify_password(plain_password, hashed_password):
+   return pwd_context.verify(plain_password, hashed_password)
+ 
+def get_password_hash(password):
+   return pwd_context.hash(password)
