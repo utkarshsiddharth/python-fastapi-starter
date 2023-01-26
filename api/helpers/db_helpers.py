@@ -5,6 +5,17 @@ from sqlalchemy.orm import Session
 from api.schemas.user_schema import LoginDto,UserOut
 from api.utils.utils import *
 
+from api.models.user_model import Base
+from api.db.database import SessionLocal, engine
+Base.metadata.create_all(bind=engine)
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 def find_item_by_id(db: Session, Model, id: int):
     item = db.query(Model).filter(Model.id == id).first()
     return item

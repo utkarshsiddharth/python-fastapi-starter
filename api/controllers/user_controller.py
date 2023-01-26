@@ -53,7 +53,6 @@ async def login_c(db: Session, login_input: LoginDto):
     authenticated = authenticate_user(db=db, Model=UserModel, login_input=login_input)
     if authenticated is None or authenticated is False:
         raise HTTPException(status_code=400, detail='Invalid Credentials')
-    print(authenticated, 'authenticated')
     user: UserOut = authenticated
     """ sing a JWT token"""
     payload = {

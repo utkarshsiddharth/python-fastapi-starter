@@ -6,23 +6,8 @@ from api.schemas.user_schema import UserOut
 from api.models.user_model import UserModel
 from api.helpers.db_helpers import *
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
-from api.db.database import SessionLocal
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 SECRET_KEY = 'nuclearcodesforfastapi'
 ALGORITHM = 'HS256'
-
-def current_user_scheme(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> UserOut:
-    """ decode the token """
-    user = decode_token(db=db, Model=UserModel,token=token)
-    return user
     
 def encode_token(payload, expires_delta: timedelta = None):
     payload_to_encode = payload.copy()
@@ -43,7 +28,6 @@ def decode_token(db, Model, token) -> UserOut:
 
     """ decode token"""
     try:
-        print(token)
         payload: UserOut = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get('sub')
         if email is None:

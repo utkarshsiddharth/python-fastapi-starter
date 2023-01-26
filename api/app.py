@@ -1,27 +1,22 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Header
+from fastapi.responses import JSONResponse
 from api.schemas.user_schema import *
 from api.schemas.profile_schema import *
 from api.controllers.user_controller import *
 from api.controllers.profile_controller import *
-from api.models.user_model import Base
-from api.db.database import SessionLocal, engine
+from starlette.middleware import Middleware
+
 from api.utils.docs import tags_metadata
-from api.helpers.auth import current_user_scheme
+from api.injectables.user_injectable import current_user_scheme
 
+from api.middlewares.decode_cookie import DecodeCookieMiddleware
 
-Base.metadata.create_all(bind=engine)
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
-
 app = FastAPI(openapi_tags=tags_metadata)
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# -- Middleware -- #
+app.add_middleware(DecodeCookieMiddleware)
 
 # -- User Routes -- #
 
@@ -59,7 +54,14 @@ async def get_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Sessio
 # Login user with email and password
 @app.post('/users/login',tags=['users'])
 async def login(login_input: LoginDto, db: Session = Depends(get_db)):
-    return await login_c(db=db, login_input=login_input)
+    token = await login_c(db=db, login_input=login_input)
+    content = {
+        "access_token": token,
+        "token_type": "bearer"
+    }
+    response = JSONResponse(content)
+    response.set_cookie("auth_token", token)
+    return response
 
 
 # protected - (admin or self) - Update User by User ID 
