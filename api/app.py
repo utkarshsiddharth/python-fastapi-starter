@@ -12,22 +12,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.utils.docs import tags_metadata
 from api.injectables.user_injectable import current_user_scheme
 
-from api.middlewares.decode_cookie import DecodeCookieMiddleware
-
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 app = FastAPI(openapi_tags=tags_metadata)
-app.mount('/', app=sio_app)
 
 # -- Middleware -- #
 app.add_middleware(CORSMiddleware, allow_origins=['*'],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"])
-app.add_middleware(DecodeCookieMiddleware)
 
 # Sockets
+app.mount('/ws', app=sio_app)
 
 # -- User Routes -- #
 

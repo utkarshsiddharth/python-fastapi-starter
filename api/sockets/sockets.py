@@ -7,7 +7,6 @@ sio_server = socketio.AsyncServer(
 
 sio_app = socketio.ASGIApp(
     socketio_server=sio_server,
-    socketio_path='sockets'
 )
 
 
@@ -18,3 +17,7 @@ async def connect(sid, environ, auth):
 @sio_server.event 
 async def disconnect(sid):
     print(f"{sid} Client Disconnect")
+
+@sio_server.event 
+async def greeting():
+    sio_server.emit('Hi there cliet :)')
