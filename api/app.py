@@ -5,6 +5,9 @@ from api.schemas.profile_schema import *
 from api.controllers.user_controller import *
 from api.controllers.profile_controller import *
 from starlette.middleware import Middleware
+# Socket.io
+from api.sockets.sockets import sio_app
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.utils.docs import tags_metadata
 from api.injectables.user_injectable import current_user_scheme
@@ -13,10 +16,18 @@ from api.middlewares.decode_cookie import DecodeCookieMiddleware
 
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
 app = FastAPI(openapi_tags=tags_metadata)
+app.mount('/', app=sio_app)
 
 # -- Middleware -- #
+app.add_middleware(CORSMiddleware, allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"])
 app.add_middleware(DecodeCookieMiddleware)
+
+# Sockets
 
 # -- User Routes -- #
 

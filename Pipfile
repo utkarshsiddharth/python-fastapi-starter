@@ -14,6 +14,8 @@ passlib = "*"
 bcrypt = "*"
 pyjwt = "*"
 python-multipart = "*"
+python-socketio = "*"
+websockets = "*"
 
 [dev-packages]
 
