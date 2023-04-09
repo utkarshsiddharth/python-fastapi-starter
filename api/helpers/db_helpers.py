@@ -1,9 +1,11 @@
 from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from fastapi import HTTPException
 
 from sqlalchemy.orm import Session
 from api.schemas.user_schema import LoginDto,UserOut
 from api.utils.utils import *
+from api.models.user_model import UserModel
 
 from api.models.user_model import Base
 from api.db.database import SessionLocal, engine
@@ -20,6 +22,10 @@ def find_item_by_id(db: Session, Model, id: int):
     item = db.query(Model).filter(Model.id == id).first()
     return item
 
+def find_item_by_email(db: Session, Model: UserModel, email: str):
+    item = db.query(Model).filter(Model.email == email).first()
+    return item
+
 def find_item_by_email(db: Session, Model, email: str):
     item = db.query(Model).filter(Model.email == email).first()
     return item
@@ -30,9 +36,17 @@ def authenticate_user(db: Session, Model, login_input: LoginDto) -> UserOut | bo
     item = find_item_by_email(db, Model=Model, email=login_input.email)
     if item is None:
         return False
+    
+    """ Check if user account is active """
+    if item.is_active == False:
+        raise HTTPException(status_code=403, detail="Please activate your account before logging in")
+
+
+
     """ Check if password is correct """
     match = verify_password(plain_password=login_input.password, hashed_password=item.password)
-    if match is None:
+    
+    if match is False:
         return False
     return item
 

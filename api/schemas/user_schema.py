@@ -23,4 +23,8 @@ class User(UserBase):
 class LoginDto(BaseModel):
     email: str 
     password: str
+
+class UserActivateToken(BaseModel):
+    email: str
+    token: str
      

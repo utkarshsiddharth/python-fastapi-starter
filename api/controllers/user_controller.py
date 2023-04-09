@@ -61,3 +61,29 @@ async def login_c(db: Session, login_input: LoginDto):
     token = encode_token(payload=payload)
     return token
 
+
+# public - activate user account
+async def activate_user_account_c(db: Session, data: UserActivateToken):
+    user = find_item_by_email(db=db, Model=UserModel, email=data.email)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found by provided email address")
+    if user.is_active == True:
+        raise HTTPException(status_code=400, detail="User is already verified")
+    
+    """ verify if token is correct """
+    if data.token:
+        print(data.token)
+        raise HTTPException(status_code=400, detail="Token is incorrect, dev token=5555")
+    # @todo
+
+    """ activate user account """
+    user_query = db.query(UserModel).filter(UserModel.email == data.email)
+    user = user_query.first()
+    payload = {
+        "is_active": True,
+    }
+    user_query.filter(UserModel.email == data.email).update(payload)
+    db.commit()
+    db.refresh(user)
+    return user
+
